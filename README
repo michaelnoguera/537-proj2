@@ -1,0 +1,17 @@
+CS 537 Programming Assignment 2 (Fall 2020)
+Michael Noguera (noguera@cs.wisc.edu) and Julien de Castelnau (de-castelnau@cs.wisc.edu)
+due 10/13/2020 at 5pm
+
+== BUILDING ==
+
+To build, run "make" at the root of this directory. If you specify the DEBUG environment
+variable as "true" or use "make DEBUG=true", debug symbols will be included in the 
+executable as well.
+
+Use "make clean" to get rid of object files and executables.
+
+== USAGE ==
+
+./prodcomm
+
+== PROJECT STRUCTURE ==
