@@ -26,28 +26,50 @@
 
 /**
  * Initializes a new empty Queue.
- * Remember to call ll_free when done!
+ * Remember to free when done!
+ * 
+ * @param size queue capacity
  * 
  * @return pointer to new heap-allocated Queue
  */
-Queue* CreateStringQueue(int size) {
+Queue* CreateStringQueue(const int size) {
     Queue* q = (Queue*)malloc(sizeof(Queue));
     if (q == NULL) {
-        perror("Error allocating memory for new queue.\n");
+        perror("Error allocating memory for new queue wrapper.\n");
         exit(EXIT_FAILURE);
     }
 
-    assert(sem_init(q.lock, 0, 1) == 0);
-    q->size = 0;
-    q->capacity = size;
-    q->head = NULL;
-    q->tail = NULL;
+    if (sem_init(&(q->space), 0, size) != 0) {
+        perror("Error: Unable to initialize semaphore that enforces max queue size.\n");
+        exit(EXIT_FAILURE);
+    }
 
-    q->enqueueCount = 0;
-    q->dequeueCount = 0;
-    q->enqueueBlockCount = 0;
-    q->dequeueBlockCount = 0;
-    sem_post()
+    if (sem_init(&(q->head_ptr_lock), 0, 1) != 0) {
+        perror("Error: Unable to set up Queue head pointer.\n");
+        exit(EXIT_FAILURE);
+    }
+    q->head = NULL;
+
+    if (sem_init(&(q->tail_ptr_lock), 0, 1) != 0) {
+        perror("Error: Unable to set up Queue head pointer.\n");
+        exit(EXIT_FAILURE);
+    }
+    q->head = NULL;
+
+
+    if (sem_init(&(q->enqueue.lock), 0, 1) != 0) {
+        perror("Error: Unable to set up Queue enqueue stat tracker.\n");
+        exit(EXIT_FAILURE);
+    }
+    q->enqueue.count=0;
+    q->enqueue.time=0;
+
+    if (sem_init(&(q->dequeue.lock), 0, 1) != 0) {
+        perror("Error: Unable to set up Queue dequeue stat tracker.\n");
+        exit(EXIT_FAILURE);
+    }
+    q->dequeue.count=0;
+    q->dequeue.time=0;
 
     return q;
 }

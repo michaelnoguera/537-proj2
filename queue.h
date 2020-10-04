@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
 
 /** 
  * enqueueCount      A count of the number of strings enqueued on this queue.
@@ -8,26 +9,40 @@
  * dequeueBlockCount A count of the number of times that a dequeue was attempted but blocked.
  */
 
-/** Node type for Queue
+/**
+ * Node type for Queue
  * 
- * Holds a single integer value (and `next` pointer to maintain list structure).
+ * Contains its own lock.
+ * Holds a single string value and `next` pointer to maintain list structure.
  */
 typedef struct q_node_t {
-    char** value;          /**< the value stored in the node */ 
-    struct q_node_t* next; /**< pointer to the next node in the list */
     sem_t lock;            /**< mutex lock on this node */
+    volatile struct q_node_t* next; /**< pointer to the next node in the list */
+    const char value[];    /**< the value stored in the node. */ 
 } Node;
 
-typedef struct Queue {
-    const int capacity;
-    Node* head;
-    Node* tail;
-    int size;
-    int enqueueCount;
-    int dequeueCount;
-    int enqueueBlockCount;
-    int dequeueBlockCount;
+struct q_stat_t {
     sem_t lock;
+    volatile int count;
+    volatile time_t time;
+};
+
+/** Thread-safe semi-parallel implementation of a singly-linked queue
+ * 
+ */
+typedef struct Queue {
+    sem_t space;
+
+    sem_t head_ptr_lock;
+    struct q_node_t* head;
+    sem_t tail_ptr_lock;
+    struct q_node_t* tail;
+
+    struct q_stat_t enqueue;
+    //|- contains lock, count, time
+
+    struct q_stat_t dequeue;
+    // -> contains lock, count, time
 } Queue;
 
 
