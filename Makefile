@@ -7,12 +7,12 @@ CFLAGS=-std=c99 -Wall
 
 all: prodcomm
 
-prodcomm: main.o queue.o
-	gcc -o 537ps main.o queue.o
+prodcomm: main.o queue.o workers.o
+	scan-build gcc -o prodcomm main.o queue.o workers.o -pthread
 
 %.o: %.c $(DEPS)
 ifeq ($(DEBUG),true)
-	scan-build gcc -g -c -o $@ $< $(CFLAGS)
+	gcc -g -c -o $@ $< $(CFLAGS)
 else
 	gcc -c -o $@ $< $(CFLAGS)
 endif

@@ -12,70 +12,53 @@
 #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
-
-// head                tail
-// |                   |
-//[O -> (O] -> [O) -> (O] ...
-// > value char** -> char* in the heap
-
-// O is node type: value, next_ptr, sem_t
-
-// enqueue: lock current and next (head) for the duration of the operation
-// dequeue: lock prev (second-to-last) and current (last) for the duration of the operation
-// iterator: locks current, gets next, locks next, releases current, releases next, returns &next
+#include <string.h>
 
 /**
  * Initializes a new empty Queue.
- * Remember to free when done!
  * 
  * @param size queue capacity
  * 
  * @return pointer to new heap-allocated Queue
  */
 Queue* CreateStringQueue(const int size) {
-    Queue* q = (Queue*)malloc(sizeof(Queue));
+    // Malloc the queue structure
+    Queue* q = (Queue*)malloc(sizeof(Queue) + size*sizeof(char*));
     if (q == NULL) {
-        perror("Error allocating memory for new queue wrapper.\n");
+        perror("Error allocating memory for new Queue structure.\n");
         exit(EXIT_FAILURE);
     }
 
-    if (sem_init(&(q->space), 0, size) != 0) {
-        perror("Error: Unable to initialize semaphore that enforces max queue size.\n");
+    for (int i = 0; i<size; i++) {
+        q->item[i] = NULL;
+    }
+
+    q->head = 0;
+    q->tail = 0;
+    q->size = size;
+
+    q->enqueueCount = 0;
+    q->dequeueCount = 0;
+    q->enqueueTime = 0;
+    q->dequeueTime = 0;
+
+    if (pthread_mutex_init(&(q->lock), 1) != 0) {
+        perror("Error initializing Queue mutex lock.\n");
         exit(EXIT_FAILURE);
     }
 
-    if (sem_init(&(q->head_ptr_lock), 0, 1) != 0) {
-        perror("Error: Unable to set up Queue head pointer.\n");
+    if (pthread_cond_init(&q->empty, NULL) != 0) {
+        perror("Error initializing 'queue empty' condition variable.\n");
         exit(EXIT_FAILURE);
     }
-    q->head = NULL;
 
-    if (sem_init(&(q->tail_ptr_lock), 0, 1) != 0) {
-        perror("Error: Unable to set up Queue head pointer.\n");
+    if (pthread_cond_init(&q->full, NULL) != 0) {
+        perror("Error initializing 'queue full' condition variable.\n");
         exit(EXIT_FAILURE);
     }
-    q->head = NULL;
-
-
-    if (sem_init(&(q->enqueue.lock), 0, 1) != 0) {
-        perror("Error: Unable to set up Queue enqueue stat tracker.\n");
-        exit(EXIT_FAILURE);
-    }
-    q->enqueue.count=0;
-    q->enqueue.time=0;
-
-    if (sem_init(&(q->dequeue.lock), 0, 1) != 0) {
-        perror("Error: Unable to set up Queue dequeue stat tracker.\n");
-        exit(EXIT_FAILURE);
-    }
-    q->dequeue.count=0;
-    q->dequeue.time=0;
+    
 
     return q;
-}
-
-Node* getNext(Node* curr) {
-
 }
 
 /**
@@ -84,96 +67,56 @@ Node* getNext(Node* curr) {
  * @param list The list to append to.
  * @param value The value of the new Node.
  */
-void EnqueueString(Queue *q, char *string) {
+
+void EnqueueString(Queue *q, const char *string) {
     if (q == NULL) {
         perror("Can't add an element to NULL.");
         exit(EXIT_FAILURE);
     }
 
-    sem_post(q->lock);
-    if (q->size == q->capacity) {
-        
-    }
+    // TODO: special case for cleanup with NULL sentinel value
 
-    // construct Node to add
-    Node* new = (Node*)malloc(sizeof(Node));
+    pthread_mutex_lock(&q->lock);
+
+    // WAIT UNTIL SPACE IF NECESSARY
+    while (q->head == (q->tail+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
+    
+    // write at index head
+    assert(q->item[q->head] == NULL);
+
+    char* new = malloc(sizeof(char)*strlen(string));
     if (new == NULL) {
-        perror("Error allocating memory for new Node.\n");
+        perror("Error allocating memory to hold provided string.");
         exit(EXIT_FAILURE);
     }
-    sem_init(new->lock, 1);
-    sem_post(new->lock);
-    new->value = value;
 
-    // attach Node to tail of list
-    if (q->size == 0) {
-        q->head = new;
-        q->tail = new;
-    } else {
-        q->tail->next = new;
-        q->tail = new;
-    }
-    q->size++;
+    q->item[q->head] = strncpy(new, string, strlen(string));
 
-    new->next = q->head;  // complete circular linking
+    // advance head ptr
+    q->head = (q->head + 1) % q->size;
+    pthread_cond_signal(&q->empty);
+	
+    pthread_mutex_unlock(&q->lock);
 }
 
-/**
- * Gets the value of the Node at an index.
- * 
- * @param list The list to search.
- * @param index The index of the Node to be retrieved. Lists are zero-indexed.
- * @return The value of the Node, or NULL if no such Node exists.
- */
-int ll_get(const Queue* queue, int index) {
-    if (list == NULL) {
-        perror("Can't get an element from NULL.");
+char* DequeueString(Queue *q) {
+    if (q == NULL) {
+        perror("Can't add an element to NULL.");
         exit(EXIT_FAILURE);
     }
-    
-    if (list->size <= index) return -1;
 
-    Node* curr = list->head;
-    for (int i = 0; i < index; i++) {
-        curr = curr->next;
-    }
+    // TODO: special case for cleanup with NULL sentinel value
 
-    return curr->value;
+    pthread_mutex_lock(&q->lock);
+
+    // WAIT UNTIL VALUE IF NECESSARY
+    while (q->head == q->tail) pthread_cond_wait(&q->empty, &q->lock);
+
+    // advance tail ptr
+    q->tail = (q->tail + 1) % q->size;
+    pthread_cond_signal(&q->full);
+
+    pthread_mutex_unlock(&q->lock);
+
+    return 'a';
 }
-
-/**
- * Frees all memory from the specified Queue.
- * If  `ptr` is NULL, no operation is performed.
- * 
- * @param ptr Pointer to Queue to be freed.
- */
-void ll_free(Queue* ptr) {
-    if (ptr == NULL) return;
-    
-    // free all Nodes
-    Node* tmp = NULL;
-    while (ptr->head != ptr->tail) {
-        tmp = ptr->head;
-        ptr->head = ptr->head->next;
-        free(tmp);
-    }
-    free(ptr->tail);
-
-    // free list wrapper
-    free(ptr);
-}
-
-/**
- * Prints all values from the specified Queue.
- * @author Julien de Castelnau
- * 
- * @param list The list to print.
- */
-void ll_print(const Queue* list) {
-    Node* curr = list->head;
-
-    for (int i = 0; i < list->size; i++) {
-        printf("%d, ", curr->value);
-        curr = curr->next;
-    }
-    printf("\n");
