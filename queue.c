@@ -42,7 +42,7 @@ Queue* CreateStringQueue(const int size) {
     q->enqueueTime = 0;
     q->dequeueTime = 0;
 
-    if (pthread_mutex_init(&(q->lock), 1) != 0) {
+    if (pthread_mutex_init(&q->lock, NULL) != 0) {
         perror("Error initializing Queue mutex lock.\n");
         exit(EXIT_FAILURE);
     }
@@ -68,7 +68,7 @@ Queue* CreateStringQueue(const int size) {
  * @param value The value of the new Node.
  */
 
-void EnqueueString(Queue *q, const char *string) {
+void EnqueueString(Queue *q, char *string) {
     if (q == NULL) {
         perror("Can't add an element to NULL.");
         exit(EXIT_FAILURE);
@@ -79,18 +79,13 @@ void EnqueueString(Queue *q, const char *string) {
     pthread_mutex_lock(&q->lock);
 
     // WAIT UNTIL SPACE IF NECESSARY
-    while (q->head == (q->tail+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
+    while (q->tail == (q->head+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
     
     // write at index head
     assert(q->item[q->head] == NULL);
 
-    char* new = malloc(sizeof(char)*strlen(string));
-    if (new == NULL) {
-        perror("Error allocating memory to hold provided string.");
-        exit(EXIT_FAILURE);
-    }
-
-    q->item[q->head] = strncpy(new, string, strlen(string));
+    q->item[q->head] = string;
+    //printf("2: %x\n", q->item[q->head]);
 
     // advance head ptr
     q->head = (q->head + 1) % q->size;
@@ -110,7 +105,9 @@ char* DequeueString(Queue *q) {
     pthread_mutex_lock(&q->lock);
 
     // WAIT UNTIL VALUE IF NECESSARY
-    while (q->head == q->tail) pthread_cond_wait(&q->empty, &q->lock);
+    while (q->tail == q->head) pthread_cond_wait(&q->empty, &q->lock);
+
+    char* string = q->item[q->tail];
 
     // advance tail ptr
     q->tail = (q->tail + 1) % q->size;
@@ -118,5 +115,6 @@ char* DequeueString(Queue *q) {
 
     pthread_mutex_unlock(&q->lock);
 
-    return 'a';
+    //printf("3: %x\n", string);
+    return string;
 }

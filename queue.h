@@ -37,7 +37,7 @@ Queue *CreateStringQueue(int size);
  * This function places the pointer to the string at the end of queue q. If the
  * queue is full, then this function blocks until there is space available.
  */
-void EnqueueString(Queue *q,const char *string);
+void EnqueueString(Queue *q, char *string);
 
 /**
  * This function removes a pointer to a string from the beginning of queue q. If

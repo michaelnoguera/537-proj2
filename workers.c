@@ -20,6 +20,7 @@ void *Reader() {
             EnqueueString(Munch1Queue, NULL); 
             break;
         } else {
+            //printf("1: %x\n", line);
             EnqueueString(Munch1Queue, line);
         }        
 	}
@@ -29,8 +30,9 @@ void *Reader() {
 void *Munch1() {
     char* line;
     char* occurrence;
-    while(line = DequeueString(Munch1Queue) != NULL) {
-        while (index(line, ' ') != NULL) {
+    while ( (line = DequeueString(Munch1Queue)) ) {
+        //printf("4: %x\n", line);
+        while ( (occurrence = (char*)index(line, ' ')) ) {
             *occurrence = '*';
         }
         EnqueueString(Munch2Queue, line);
@@ -41,7 +43,7 @@ void *Munch1() {
 
 void *Munch2() {
     char* line;
-    while(line = DequeueString(Munch2Queue) != NULL) {
+    while ( (line = DequeueString(Munch2Queue)) ) {
         int index = 0;
         while (line[index] != 0) {
             if(islower(line[index])) {
@@ -57,7 +59,7 @@ void *Munch2() {
 
 void *Writer() {
     char* line;
-    while(line = DequeueString(WriteQueue) != NULL) {
+    while ( (line = DequeueString(WriteQueue)) ) {
         printf("%s", line);
     }
     pthread_exit(NULL); // return successfully
