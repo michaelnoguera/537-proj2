@@ -34,5 +34,6 @@ int main() {
    pthread_join(munch1_id, NULL);
    pthread_join(munch2_id, NULL);
    pthread_join(writer_id, NULL);
+   
    return 0;
 }

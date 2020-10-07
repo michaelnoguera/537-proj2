@@ -74,18 +74,19 @@ void EnqueueString(Queue *q, char *string) {
         exit(EXIT_FAILURE);
     }
 
-    // TODO: special case for cleanup with NULL sentinel value
-
     pthread_mutex_lock(&q->lock);
+
+    // TODO: special case for cleanup with NULL sentinel value
+    if (string == NULL) {
+        printf("Sentinel value recieved.\nTODO: Implement behavior\n");
+    }
 
     // WAIT UNTIL SPACE IF NECESSARY
     while (q->tail == (q->head+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
     
     // write at index head
-    assert(q->item[q->head] == NULL);
-
+    assert(q->item[q->head] == NULL/*make sure we're not going to overwrite an occupied space in the queue*/);
     q->item[q->head] = string;
-    //printf("2: %x\n", q->item[q->head]);
 
     // advance head ptr
     q->head = (q->head + 1) % q->size;
@@ -96,13 +97,13 @@ void EnqueueString(Queue *q, char *string) {
 
 char* DequeueString(Queue *q) {
     if (q == NULL) {
-        perror("Can't add an element to NULL.");
+        perror("Can't remove an element from NULL.");
         exit(EXIT_FAILURE);
     }
 
-    // TODO: special case for cleanup with NULL sentinel value
-
     pthread_mutex_lock(&q->lock);
+
+    // TODO: special case for cleanup with NULL sentinel value
 
     // WAIT UNTIL VALUE IF NECESSARY
     while (q->tail == q->head) pthread_cond_wait(&q->empty, &q->lock);

@@ -17,6 +17,9 @@ void *Reader() {
         bufsize = 0;
         if (getline(&line, &bufsize, stdin) < 0) {
             // Enqueue NULL pointer. This indicates there is no more input.
+            
+            // TODO check that eof reached here
+
             EnqueueString(Munch1Queue, NULL); 
             break;
         } else {
@@ -24,6 +27,7 @@ void *Reader() {
             EnqueueString(Munch1Queue, line);
         }        
 	}
+
     pthread_exit(NULL); // return successfully
 }
 
@@ -59,8 +63,13 @@ void *Munch2() {
 
 void *Writer() {
     char* line;
+
+    // TODO recieve null sentinel value meaning that writer has written everything
     while ( (line = DequeueString(WriteQueue)) ) {
         printf("%s", line);
     }
+
+    // TODO writer needs to free each line as it is output
+
     pthread_exit(NULL); // return successfully
 }
