@@ -17,6 +17,10 @@ else
 	gcc -c -o $@ $< $(CFLAGS)
 endif
 
+test: all
+	@bash test.sh
+
 clean:
-	rm *.o
-	rm prodcomm
+	@rm *.o
+	@rm prodcomm
+	@rm test.log
