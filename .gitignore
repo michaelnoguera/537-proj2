@@ -2,3 +2,5 @@
 *.o
 .vscode
 prodcomm
+test.log
+tests/disable/
