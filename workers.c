@@ -1,32 +1,53 @@
 #define _GNU_SOURCE
+
+#include <stdlib.h>
+
 #include "workers.h"
+
 
 Queue *Munch1Queue;
 Queue *Munch2Queue;
 Queue *WriteQueue;
 
-void *Reader() {
-    size_t bufsize = 0;
-    char *line;
-    while(1) {
-        // read line into temp heap-alloc'd buffer
-        // "If *lineptr is set to NULL and *n is set 0 before the call, 
-        // then getline() will allocate a buffer for storing the line.  
-        // This buffer should be freed by the user program even if getline() failed." See getline(3)
-        line = NULL;
-        bufsize = 0;
-        if (getline(&line, &bufsize, stdin) < 0) {
-            // Enqueue NULL pointer. This indicates there is no more input.
-            
-            // TODO check that eof reached here
+/**
+ * Custom getline() implementation that meets the assignment requirements.
+ * Reads from stdin.
+ */
+char* readerReadLine() {
+    char c;
+    unsigned int i = 0;
 
-            EnqueueString(Munch1Queue, NULL); 
-            break;
-        } else {
-            //printf("1: %x\n", line);
-            EnqueueString(Munch1Queue, line);
-        }        
-	}
+    const size_t BUFSIZE = 4096;
+    char* buf = (char*)calloc(BUFSIZE, sizeof(char));
+    
+    while (i < 4096) {
+        c = getchar();
+        if (i == 0 && c == EOF) return NULL;
+        if (c == '\n' || c == EOF) {
+            buf[i] = '\0';
+            return buf;
+        }
+        buf[i] = c;
+        i++;
+    }
+    
+    perror("line too long, skipping");
+    
+    c = getchar();
+    while (c != '\n' && c != EOF) {
+        c = getchar();
+    }
+
+    return '\0';
+}
+
+void *Reader() {
+    char* line;
+    while((line = readerReadLine()) != NULL) {
+        printf("Just read: %s, %p", line, line);
+        EnqueueString(Munch1Queue, readerReadLine());
+    }
+    EnqueueString(Munch1Queue, NULL);
 
     pthread_exit(NULL); // return successfully
 }
@@ -34,8 +55,7 @@ void *Reader() {
 void *Munch1() {
     char* line;
     char* occurrence;
-    while ( (line = DequeueString(Munch1Queue)) ) {
-        //printf("4: %x\n", line);
+    while ((line = DequeueString(Munch1Queue)) != NULL) {
         while ( (occurrence = (char*)index(line, ' ')) ) {
             *occurrence = '*';
         }
@@ -47,7 +67,7 @@ void *Munch1() {
 
 void *Munch2() {
     char* line;
-    while ( (line = DequeueString(Munch2Queue)) ) {
+    while ((line = DequeueString(Munch2Queue)) != NULL) {
         int index = 0;
         while (line[index] != 0) {
             if(islower(line[index])) {
@@ -64,12 +84,10 @@ void *Munch2() {
 void *Writer() {
     char* line;
 
-    // TODO recieve null sentinel value meaning that writer has written everything
-    while ( (line = DequeueString(WriteQueue)) ) {
+    while ((line = DequeueString(WriteQueue)) != NULL) {
         printf("%s", line);
+        free(line);
     }
-
-    // TODO writer needs to free each line as it is output
 
     pthread_exit(NULL); // return successfully
 }
