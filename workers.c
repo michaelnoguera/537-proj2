@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "workers.h"
 
@@ -20,23 +21,32 @@ char* readerReadLine() {
     const size_t BUFSIZE = 4096;
     char* buf = (char*)calloc(BUFSIZE, sizeof(char));
     
-    while (i < 4096) {
+    while (i < BUFSIZE) {
         c = getchar();
+        //printf("%c", c);
         if (i == 0 && c == EOF) return NULL;
-        if (c == '\n' || c == EOF) {
+        if (c == EOF) {
             buf[i] = '\0';
             return buf;
         }
+        if(i < BUFSIZE-1 && c == '\n') {
+            buf[i] = '\n';
+            buf[i+1] = '\0';
+            return buf;
+        }
+
         buf[i] = c;
         i++;
     }
     
-    perror("line too long, skipping");
+    fprintf(stderr, "line too long, skipping\n");
+    free(buf); // not gonna use it
     
-    c = getchar();
-    while (c != '\n' && c != EOF) {
+    while (c != EOF && c != '\n') {
         c = getchar();
     }
+    //printf("Finished consuming throwaway line: %x", c);
+    putc(c, stdin);
 
     return '\0';
 }
@@ -94,7 +104,9 @@ void *Writer() {
 
     while ((line = DequeueString(WriteQueue)) != NULL) {
         //printf("[WRITER RECIEVED] %p = %s\n", line, line);
-        printf("%s", line);
+        for (int i = 0; i < strlen(line); i++) {
+            putchar(line[i]);
+        }
         free(line);
     }
     //printf("[WRITER] Finished, recieved NULL sentinel value.\n");
