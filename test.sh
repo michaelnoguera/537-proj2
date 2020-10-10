@@ -11,7 +11,7 @@ for TEST in tests/*.txt
 do
     let "TOTAL+=1" 
     echo -e '\n\n'$TOTAL. $TEST >> test.log
-    BUF=$((./prodcomm <$TEST >>/dev/null | cmp <(sed 's/ /\*/g' <$TEST | sed 's/[a-z]/\U&/g') &>> test.log) 2>&1)
+    BUF=$((./prodcomm <$TEST >>/dev/null | cmp <(sed '/^.\{4096\}/d' <$TEST | sed 's/ /\*/g' | sed 's/[a-z]/\U&/g') &>> test.log) 2>&1)
     if [ $? -eq 0 ]
     then
         let "OK+=1" 
