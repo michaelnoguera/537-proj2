@@ -1,16 +1,18 @@
 #include <time.h>
+#include <pthread.h>
 
 typedef struct q_stat_t {
-    // TODO add synchronization field
+    pthread_mutex_t lock;
+
     unsigned int count;
     time_t time; // total
 } Stat;
 
-Stat CreateQueueStatistic();
+Stat* CreateQueueStatistic();
 
-int incrementCount();
-int setCount(unsigned int newValue);
-int getCount();
+int incrementCount(Stat* s);
+int setCount(Stat* s, unsigned int newValue);
+int getCount(Stat* s);
 
-int addTime(time_t timeToAdd);
-time_t getTime();
+int addTime(Stat* s, time_t timeToAdd);
+time_t getTime(Stat* s);

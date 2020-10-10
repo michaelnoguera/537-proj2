@@ -1,5 +1,4 @@
 #include <pthread.h>
-#include <semaphore.h>
 #include <time.h>
 
 /** Thread-safe implementation of a dynamically-allocated array-based queue
