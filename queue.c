@@ -76,11 +76,13 @@ void EnqueueString(Queue *q, char *string) {
 
     pthread_mutex_lock(&q->lock);
 
+    //printf("  {ENQUEUE adding %s}\n", string);
+
     // WAIT UNTIL SPACE IF NECESSARY
     while (q->tail == (q->head+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
     
     // write at index head
-    assert(q->item[q->head] == NULL/*make super duper extra sure we're not going to overwrite an occupied space in the queue*/);
+    assert(q->item[q->head] == NULL);
     q->item[q->head] = string;
 
     // advance head ptr
@@ -111,6 +113,6 @@ char* DequeueString(Queue *q) {
 
     pthread_mutex_unlock(&q->lock);
 
-    //printf("3: %x\n", string);
+    //printf("\n  {DEQUEUE returning %s}\n", string);
     return string;
 }
