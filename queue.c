@@ -37,10 +37,8 @@ Queue* CreateStringQueue(const int size) {
     q->tail = 0;
     q->size = size;
 
-    q->enqueueCount = 0;
-    q->dequeueCount = 0;
-    q->enqueueTime = 0;
-    q->dequeueTime = 0;
+    q->dequeueStat = CreateQueueStatistic();
+    q->enqueueStat = CreateQueueStatistic();
 
     if (pthread_mutex_init(&q->lock, NULL) != 0) {
         perror("Error initializing Queue mutex lock.\n");
@@ -70,11 +68,13 @@ Queue* CreateStringQueue(const int size) {
 
 void EnqueueString(Queue *q, char *string) {
     if (q == NULL) {
-        perror("Can't add an element to NULL.");
+        perror("Can't enqueue an item to NULL.");
         exit(EXIT_FAILURE);
     }
 
     pthread_mutex_lock(&q->lock);
+
+    clock_t temp_start = clock();
 
     //printf("  {ENQUEUE adding %s}\n", string);
 
@@ -87,18 +87,24 @@ void EnqueueString(Queue *q, char *string) {
 
     // advance head ptr
     q->head = (q->head + 1) % q->size;
+    // increment stats counter
+    incrementCount(q->enqueueStat);
     pthread_cond_signal(&q->empty);
 	
+    addTime(q->enqueueStat, clock() - temp_start);
+
     pthread_mutex_unlock(&q->lock);
 }
 
 char* DequeueString(Queue *q) {
     if (q == NULL) {
-        perror("Can't remove an element from NULL.");
+        perror("Can't dequeue an item from NULL.");
         exit(EXIT_FAILURE);
     }
 
     pthread_mutex_lock(&q->lock);
+
+    clock_t temp_start = clock();
 
     // TODO: special case for cleanup with NULL sentinel value
 
@@ -108,11 +114,30 @@ char* DequeueString(Queue *q) {
     char* string = q->item[q->tail]; // retrieve from queue
     q->item[q->tail] = NULL; // null out old ptr
     q->tail = (q->tail + 1) % q->size; // advance tail ptr
-    
+    incrementCount(q->dequeueStat);
     pthread_cond_signal(&q->full);
+
+    addTime(q->dequeueStat, clock() - temp_start);
 
     pthread_mutex_unlock(&q->lock);
 
     //printf("\n  {DEQUEUE returning %s}\n", string);
     return string;
+}
+
+void PrintQueueStats(Queue *q) {
+    if (q == NULL) {
+        perror("Can't print statistics for NULL queue.");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_mutex_lock(&q->lock);
+
+    double total_time_d = ((double)getTime(q->dequeueStat))/CLOCKS_PER_SEC;
+    double total_time_e = ((double)getTime(q->enqueueStat))/CLOCKS_PER_SEC;
+
+    fprintf(stderr, "Dequeue Count: %d\nEnqueue Count: %d\n", getCount(q->dequeueStat), getCount(q->enqueueStat));
+    fprintf(stderr, "Dequeue Time: %f\nEnqueue Time: %f\n", total_time_d, total_time_e);
+
+    pthread_mutex_unlock(&q->lock);
 }

@@ -1,5 +1,7 @@
 
 #include <stdlib.h>
+#include <stdio.h> 
+#include <errno.h>
 
 #include "stat.h"
 
@@ -54,5 +56,25 @@ int getCount(Stat* s) {
     return currentValue;
 }
 
-int addTime(Stat* s, time_t timeToAdd);
-time_t getTime(Stat* s);
+int addTime(Stat* s, clock_t timeToAdd) {
+    if (s == NULL) {
+        perror("Not a valid statistic.");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_mutex_lock(&s->lock);
+    s->time += timeToAdd;
+    pthread_mutex_unlock(&s->lock);
+}
+
+clock_t getTime(Stat* s) { 
+    if (s == NULL) {
+        perror("Not a valid statistic.");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_mutex_lock(&s->lock);
+    time_t currentTime = s->time;
+    pthread_mutex_unlock(&s->lock);
+    return currentTime;
+}

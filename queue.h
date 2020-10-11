@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <time.h>
+#include "stat.h"
 
 /** Thread-safe implementation of a dynamically-allocated array-based queue
  */
@@ -8,10 +9,8 @@ typedef struct Queue {
     pthread_cond_t empty;
     pthread_cond_t full;
 
-    int enqueueCount;
-    int dequeueCount;
-    time_t enqueueTime; /// total time spent doing enqueues
-    time_t dequeueTime; /// total time spent doing dequeues
+    Stat* enqueueStat; /// total time spent doing enqueues
+    Stat* dequeueStat; /// total time spent doing dequeues
     
     int head; /// next index to enqueue at
     int tail; /// next index to dequeue from

@@ -41,5 +41,12 @@ int main() {
    pthread_join(munch2_id, NULL);
    pthread_join(writer_id, NULL);
 
+   fprintf(stderr, "\nSTATISTICS FOR Munch1Queue\n");
+   PrintQueueStats(Munch1Queue);
+   fprintf(stderr, "STATISTICS FOR Munch2Queue\n");
+   PrintQueueStats(Munch2Queue);
+   fprintf(stderr, "STATISTICS FOR WriteQueue\n");
+   PrintQueueStats(WriteQueue);
+
    return 0;
 }

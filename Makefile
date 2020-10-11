@@ -1,16 +1,36 @@
 # See README for notes about project organization
 
-DEPS=queue.h
 CFLAGS=-std=c99 -Wall
 
 .PHONY:clean
 
 all: prodcomm
 
-prodcomm: main.o queue.o workers.o
-	scan-build gcc -o prodcomm main.o queue.o workers.o -pthread
+prodcomm: main.o queue.o workers.o stat.o
+	scan-build gcc -o prodcomm main.o queue.o workers.o stat.o -pthread
 
-%.o: %.c $(DEPS)
+main.o: main.c workers.h queue.h stat.h
+ifeq ($(DEBUG),true)
+	gcc -g -c -o $@ $< $(CFLAGS)
+else
+	gcc -c -o $@ $< $(CFLAGS)
+endif
+
+queue.o: queue.c queue.h stat.h
+ifeq ($(DEBUG),true)
+	gcc -g -c -o $@ $< $(CFLAGS)
+else
+	gcc -c -o $@ $< $(CFLAGS)
+endif
+
+workers.o: workers.c workers.h queue.h stat.h
+ifeq ($(DEBUG),true)
+	gcc -g -c -o $@ $< $(CFLAGS)
+else
+	gcc -c -o $@ $< $(CFLAGS)
+endif
+
+stat.o: stat.c stat.h
 ifeq ($(DEBUG),true)
 	gcc -g -c -o $@ $< $(CFLAGS)
 else
