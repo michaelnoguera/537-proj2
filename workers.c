@@ -5,7 +5,6 @@
 
 #include "workers.h"
 
-
 Queue *Munch1Queue;
 Queue *Munch2Queue;
 Queue *WriteQueue;
@@ -109,6 +108,8 @@ void *Writer() {
         }
         free(line);
     }
+    
+    printf("%d\n", getCount(WriteQueue->dequeueStat));
     //printf("[WRITER] Finished, recieved NULL sentinel value.\n");
 
     pthread_exit(NULL); // return successfully
