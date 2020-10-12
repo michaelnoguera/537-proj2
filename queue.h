@@ -2,6 +2,7 @@
 #include <time.h>
 #include "stat.h"
 
+#ifndef __QUEUE__
 /** Thread-safe implementation of a dynamically-allocated array-based queue
  */
 typedef struct Queue {
@@ -54,3 +55,6 @@ char * DequeueString(Queue *q);
  *  dequeueBlockCount A count of the number of times that a dequeue was attempted but blocked.
  */
 void PrintQueueStats(Queue *q);
+
+#define __QUEUE__
+#endif
