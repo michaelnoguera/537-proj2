@@ -1,6 +1,6 @@
 # See README for notes about project organization
 
-CFLAGS=-std=c99 -Wall
+CFLAGS=-std=c99 -Wall -pedantic
 
 .PHONY:clean
 

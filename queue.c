@@ -22,6 +22,7 @@
  * @return pointer to new heap-allocated Queue
  */
 Queue* CreateStringQueue(const int size) {
+    assert(size > 0);
     // Malloc the queue structure
     Queue* q = (Queue*)malloc(sizeof(Queue) + size*sizeof(char*));
     if (q == NULL) {

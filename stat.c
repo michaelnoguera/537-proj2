@@ -19,9 +19,11 @@ Stat* CreateQueueStatistic() {
 
     s->count = 0;
     s->time = 0;
+
+    return s;
 }
 
-int incrementCount(Stat* s) {
+void incrementCount(Stat* s) {
     if (s == NULL) {
         perror("Not a valid statistic.");
         exit(EXIT_FAILURE);
@@ -32,7 +34,7 @@ int incrementCount(Stat* s) {
     pthread_mutex_unlock(&s->lock);
 }
 
-int setCount(Stat* s, unsigned int newValue) {
+void setCount(Stat* s, unsigned int newValue) {
     if (s == NULL) {
         perror("Not a valid statistic.");
         exit(EXIT_FAILURE);
@@ -56,7 +58,7 @@ int getCount(Stat* s) {
     return currentValue;
 }
 
-int addTime(Stat* s, clock_t timeToAdd) {
+void addTime(Stat* s, clock_t timeToAdd) {
     if (s == NULL) {
         perror("Not a valid statistic.");
         exit(EXIT_FAILURE);
