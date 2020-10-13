@@ -1,13 +1,15 @@
 # See README for notes about project organization
 
 CFLAGS=-std=c99 -Wall -pedantic
+SCAN_BUILD_DIR=scan-build-out
 
-.PHONY:clean test all
+.PHONY:clean test all scan-build scan-view
 
 all: prodcomm
 
+# build executable
 prodcomm: main.o queue.o workers.o stat.o
-	scan-build gcc -o prodcomm main.o queue.o workers.o stat.o -pthread
+	gcc -o prodcomm main.o queue.o workers.o stat.o -pthread
 
 main.o: main.c workers.h queue.h stat.h
 ifeq ($(DEBUG),true)
@@ -37,10 +39,20 @@ else
 	gcc -c -o $@ $< $(CFLAGS)
 endif
 
+# Run test framework
 test: all
 	@bash test.sh
 
+# Clean files
 clean:
 	rm -f *.o
 	rm -f prodcomm
 	rm -f test.log
+
+# Run the Clang Static Analyzer
+scan-build: clean
+	scan-build -o $(SCAN_BUILD_DIR) make
+
+# View the one scan avaialble
+scan-view: scan-build
+	xdg-open $(SCAN_BUILD_DIR)/*/index.html 
