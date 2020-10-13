@@ -2,7 +2,7 @@
 
 CFLAGS=-std=c99 -Wall -pedantic
 
-.PHONY:clean
+.PHONY:clean test all
 
 all: prodcomm
 
@@ -41,6 +41,6 @@ test: all
 	@bash test.sh
 
 clean:
-	@rm *.o
-	@rm prodcomm
-	@rm test.log
+	rm -f *.o
+	rm -f prodcomm
+	rm -f test.log
