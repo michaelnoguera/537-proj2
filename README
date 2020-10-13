@@ -6,12 +6,37 @@ due 10/13/2020 at 5pm
 
 To build, run "make" at the root of this directory. If you specify the DEBUG environment
 variable as "true" or use "make DEBUG=true", debug symbols will be included in the 
-executable as well.
+executable as well. You can also run the scan-build target to build with the Clang static
+analyzer, and scan-view to view the generated output in a web browser.
 
 Use "make clean" to get rid of object files and executables.
 
 == USAGE ==
 
-./prodcomm
+prodcomm takes input from standard input, so text can either be typed in and then terminated
+with Ctrl-D (EOF), or it can be piped in from a file like so:
+
+./prodcomm < test.txt
+
+The output will be printed to standard output or it can be redirected like the input.
 
 == PROJECT STRUCTURE ==
+
+The functionality of prodcomm is divided into four logical modules, which serve the
+ following tasks:
+
+1. main: Initialize the three queues and call pthread_create for each worker.
+2. workers: Code for Reader, Munch1, Munch2, and Writer processes, as well the helper 
+            routines they require to operate (such as reader_readline)
+3. queue: Queue backend and the functions that operate on queues 
+          (Initialize, Enqueue, Dequeue, PrintStats).
+4. stat: Statistics backend and interface, used by Queue for tracking 
+         enqueue/dequeue count and time.
+
+== TESTING FRAMEWORK ==
+
+"make test" runs our test script which compares the output of prodcomm against a mock script
+that performs the same text transformation, written in bash. Each text file in the tests 
+will be tested against the expected output, and a summary of which tests passed and failed
+will be printed to standard output. The stderr output from prodcomm containing statistics and
+other warnings is also redirected to test.log.
