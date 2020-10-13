@@ -1,2 +1,2 @@
-Michael Noguera         netid:noguera       csl:noguera
-Julien de Castelnau     netid:decastelnau   csl:de-castelnau
+Michael Noguera, mnoguera, noguera
+Julien de Castelnau, decastelnau, de-castelnau
