@@ -9,7 +9,7 @@
 # Output from each test (diffs) are put into the test.log file in the present
 # directory. The file is created or overwritten as needed.
 
-rm test.log
+rm -f test.log
 
 let "TOTAL=0"
 let "OK=0"
