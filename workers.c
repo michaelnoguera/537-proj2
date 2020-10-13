@@ -9,10 +9,13 @@
 
 #include "workers.h"
 
+#include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <strings.h>
 
 /**
  * Custom getline() implementation that meets the assignment requirements.
@@ -24,7 +27,7 @@
  * @return pointer to heap-allocated string on success, NULL and the appropriate
  * flag on failure
  */
-char* readerReadLine(bool* overflow, bool* endOfFile) {
+static char* readerReadLine(bool* overflow, bool* endOfFile) {
     char c;
     unsigned int i = 0;
 
@@ -79,9 +82,10 @@ char* readerReadLine(bool* overflow, bool* endOfFile) {
  * Reader thread. Consumes input from stdin and parses it into the first
  * Muncher's queue.
  * 
- * @param outputQueue queue where Reader should put strings it reads
+ * @param outputQueue void* wrapping a Queue*, which is the queue where Reader
+ *  should put strings it reads
  */
-void* Reader(Queue* outputQueue) {
+void* Reader(void* outputQueue) {
     char* line;
     bool overflow = false;
     bool endOfFile = false;
@@ -95,10 +99,10 @@ void* Reader(Queue* outputQueue) {
         if (endOfFile) break;
 
         // STORE THE LINE
-        EnqueueString(outputQueue, line);
+        EnqueueString((Queue*)outputQueue, line);
     }
     // OUT OF LINES -> enqueue null sentinel value
-    EnqueueString(outputQueue, NULL);
+    EnqueueString((Queue*)outputQueue, NULL);
 
     pthread_exit(NULL);
 }
@@ -107,25 +111,27 @@ void* Reader(Queue* outputQueue) {
  * First Muncher. Replaces spaces with asterisks as it reads from Munch1Queue,
  * and enqueues results to Munch2Queue.
  * 
- * @param queue array of two pointers to queues. `queue[0]` is used for input to
- *  this function and `queue[1]` is used for output.
+ * @param queues void* wrapping a Queue*[2], where `queue[0]` is used for input
+ *  to this function and `queue[1]` is used for output.
  */
-void* Munch1(Queue** queue) {
-    assert(queue[0] != NULL && queue[1] != NULL);
+void* Munch1(void* queues) {
+    Queue* in = ((Queue**)queues)[0];
+    Queue* out = ((Queue**)queues)[1];
+    assert(in != NULL && out != NULL);
 
     char* line;
     char* occurrence;
 
-    while ((line = DequeueString(queue[0])) != NULL) {
+    while ((line = DequeueString(in)) != NULL) {
         // replace spaces with asterisks
         while ((occurrence = (char*)index(line, ' '))) {
             *occurrence = '*';
         }
-        EnqueueString(queue[1], line);
+        EnqueueString(out, line);
     }
 
     // enqueue null sentinel value
-    EnqueueString(queue[1], NULL);
+    EnqueueString(out, NULL);
     pthread_exit(NULL);
 }
 
@@ -133,14 +139,16 @@ void* Munch1(Queue** queue) {
  * Second Muncher. Capitalizes all lowercase letters as it reads from
  * Munch2Queue, and enqueues the results in WriteQueue.
  * 
- * @param queue array of two pointers to queues. `queue[0]` is used for input to
- *  this function and `queue[1]` is used for output.
+ * @param queues void* wrapping a Queue*[2], where `queue[0]` is used for input
+ *  to this function and `queue[1]` is used for output.
  */
-void* Munch2(Queue** queue) {
-    assert(queue[0] != NULL && queue[1] != NULL);
+void* Munch2(void* queues) {
+    Queue* in = ((Queue**)queues)[0];
+    Queue* out = ((Queue**)queues)[1];
+    assert(in != NULL && out != NULL);
 
     char* line;
-    while ((line = DequeueString(queue[0])) != NULL) {
+    while ((line = DequeueString(in)) != NULL) {
         // convert lowercase to uppercase
         int i = 0;
         while (line[i] != '\0') {
@@ -149,11 +157,11 @@ void* Munch2(Queue** queue) {
             }
             i++;
         }
-        EnqueueString(queue[1], line);
+        EnqueueString(out, line);
     }
 
     // enqueue null sentinel value
-    EnqueueString(queue[1], NULL);
+    EnqueueString(out, NULL);
     pthread_exit(NULL);
 }
 
@@ -161,19 +169,21 @@ void* Munch2(Queue** queue) {
  * Writer thread. End of the 'pipeline', this takes strings from the queue and
  * prints them to stdout.
  * 
- * @param inputQueue queue that Writer should read from
+ * @param inputQueue void* wrapping a Queue*, which is the queue that Writer
+ *  should read from
  */
-void* Writer(Queue* inputQueue) {
+void* Writer(void* inputQueue) {
     char* line;
-
     int i = 0;
-    while ((line = DequeueString(inputQueue)) != NULL) {
+
+    // write and free each string
+    while ((line = DequeueString((Queue*)inputQueue)) != NULL) {
         printf("%s\n", line);
         free(line);
         i++;
     }
 
-    printf("%d\n", i);
+    printf("%d\n", i);  // print number of strings output
 
     pthread_exit(NULL);  // return successfully
 }

@@ -6,6 +6,8 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "workers.h"
 
 int main() {

@@ -1,21 +1,40 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <strings.h>
-#include <pthread.h>
-
+#ifndef __WORKERS__
 #include "queue.h"
 
-#ifndef __WORKERS__
-extern Queue *Munch1Queue;
-extern Queue *Munch2Queue;
-extern Queue *WriteQueue;
+/**
+ * Reader thread. Consumes input from stdin and parses it into the first
+ * Muncher's queue.
+ * 
+ * @param outputQueue void* wrapping a Queue*, which is the queue where Reader
+ *  should put strings it reads
+ */
+void* Reader(void* outputQueue);
 
-void *Reader();
+/**
+ * First Muncher. Replaces spaces with asterisks as it reads from Munch1Queue,
+ * and enqueues results to Munch2Queue.
+ * 
+ * @param queues void* wrapping a Queue*[2], where `queue[0]` is used for input
+ *  to this function and `queue[1]` is used for output.
+ */
+void* Munch1(void* queues);
 
-void *Munch1();
+/**
+ * Second Muncher. Capitalizes all lowercase letters as it reads from
+ * Munch2Queue, and enqueues the results in WriteQueue.
+ * 
+ * @param queues void* wrapping a Queue*[2], where `queue[0]` is used for input
+ *  to this function and `queue[1]` is used for output.
+ */
+void* Munch2(void* queues);
 
-void *Munch2();
-
-void *Writer();
+/**
+ * Writer thread. End of the 'pipeline', this takes strings from the queue and
+ * prints them to stdout.
+ * 
+ * @param inputQueue void* wrapping a Queue*, which is the queue that Writer
+ *  should read from
+ */
+void* Writer(void* inputQueue);
 #define __WORKERS__
 #endif

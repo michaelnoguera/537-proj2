@@ -127,7 +127,9 @@ char* DequeueString(Queue *q) {
 }
 
 /**
- * Prints queue statistics 
+ * Prints queue statistics to stderr
+ * 
+ * @param q The Queue for which statistics are to be printed.
  */
 void PrintQueueStats(Queue *q) {
     if (q == NULL) {
