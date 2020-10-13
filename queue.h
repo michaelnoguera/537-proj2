@@ -1,8 +1,16 @@
-#include <pthread.h>
-#include <time.h>
-#include "stat.h"
+/**
+ * CS 537 Programming Assignment 2 (Fall 2020)
+ * @author Michael Noguera, Julien de Castelnau
+ * @date 10/13/2020
+ * @file queue.h
+ */
 
 #ifndef __QUEUE__
+#include <pthread.h>
+#include <time.h>
+
+#include "stat.h"
+
 /** Thread-safe implementation of a dynamically-allocated array-based queue
  */
 typedef struct Queue {
@@ -10,49 +18,49 @@ typedef struct Queue {
     pthread_cond_t empty;
     pthread_cond_t full;
 
-    Stat* enqueueStat; /// total time spent doing enqueues
-    Stat* dequeueStat; /// total time spent doing dequeues
-    
-    int head; /// next index to enqueue at
-    int tail; /// next index to dequeue from
-    size_t size; /// max items the queue can hold
-    char* item[];
+    Stat *enqueueStat;  /// total time spent doing enqueues
+    Stat *dequeueStat;  /// total time spent doing dequeues
+
+    int head;     /// next index to enqueue at
+    int tail;     /// next index to dequeue from
+    size_t size;  /// max items the queue can hold
+    char *item[];
 
 } Queue;
 
 /**
- * Dynamically allocate a new Queue structure and initialize it with an array of
- * character points of length size. That means you'll malloc the queue structure
- * and then malloc the char ** array pointed to from that structure. Also remember
- * to any state and synchronization variables used in this structure.
+ * Initializes a new empty Queue.
  * 
- * The function returns a pointer to the new queue structure.
+ * @param size queue capacity
  * 
- * For testing purposes, create your Queue's with a size of 10. 
+ * @return pointer to new heap-allocated Queue
  */
 Queue *CreateStringQueue(int size);
 
 /**
- * This function places the pointer to the string at the end of queue q. If the
- * queue is full, then this function blocks until there is space available.
+ * Adds a new Node to the end of a Queue.
+ * 
+ * @param q The queue to enqueue to.
+ * @param value The value of the new node.
  */
 void EnqueueString(Queue *q, char *string);
 
 /**
- * This function removes a pointer to a string from the beginning of queue q. If
- * the queue is empty, then this function blocks until there is a string placed
- * into the queue. This function returns the pointer that was removed from the queue. 
+ * Removes a node from the end of a queue
  * 
- * Dequeue from an empty list returns NULL.
+ * @param q The queue from which to dequeue from
+ * @return the char* pointer that was removed, which can point to NULL
  */
-char * DequeueString(Queue *q);
+char *DequeueString(Queue *q);
 
 /**
- * This function prints the statistics for this queue (see the next section for details).
- *  enqueueCount      A count of the number of strings enqueued on this queue.
- *  dequeueCount      A count of the number of strings dequeued on this queue. We would expect that when the program exits, the two count values are equal.
- *  enqueueBlockCount A count of the number of times that an enqueue was attempted but blocked.
- *  dequeueBlockCount A count of the number of times that a dequeue was attempted but blocked.
+ * Prints queue statistics to stderr:
+ *  enqueueCount - A count of the number of strings enqueued on this queue.
+ *  dequeueCount - A count of the number of strings dequeued on this queue.
+ *  enqueueTime - Total time spent performing enqueue operations. 
+ *  dequeueTime - Total time spent performing dequeue operations.
+ * 
+ * @param q The Queue for which statistics are to be printed.
  */
 void PrintQueueStats(Queue *q);
 

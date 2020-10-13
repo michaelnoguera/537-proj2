@@ -1,3 +1,10 @@
+/**
+ * CS 537 Programming Assignment 2 (Fall 2020)
+ * @author Michael Noguera, Julien de Castelnau
+ * @date 10/13/2020
+ * @file workers.h
+ */
+
 #ifndef __WORKERS__
 #include "queue.h"
 

@@ -30,6 +30,7 @@ Queue* CreateStringQueue(const int size) {
         exit(EXIT_FAILURE);
     }
 
+    // Setup queue spots and internal fields
     for (int i = 0; i<size; i++) {
         q->item[i] = NULL;
     }
@@ -38,9 +39,12 @@ Queue* CreateStringQueue(const int size) {
     q->tail = 0;
     q->size = size;
 
+    // Setup statistics: our stat type tracks both time and count for a given
+    // operation
     q->dequeueStat = CreateQueueStatistic();
     q->enqueueStat = CreateQueueStatistic();
 
+    // Setup synchronization
     if (pthread_mutex_init(&q->lock, NULL) != 0) {
         perror("Error initializing Queue mutex lock.\n");
         exit(EXIT_FAILURE);
@@ -56,7 +60,6 @@ Queue* CreateStringQueue(const int size) {
         exit(EXIT_FAILURE);
     }
     
-
     return q;
 }
 
@@ -77,7 +80,8 @@ void EnqueueString(Queue *q, char *string) {
     clock_t temp_start = clock();
 
     // WAIT UNTIL SPACE IF NECESSARY
-    while (q->tail == (q->head+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
+    while (q->tail == (q->head+1) % (q->size))
+        pthread_cond_wait(&q->full, &q->lock);
     
     // write at index head
     assert(q->item[q->head] == NULL);
@@ -98,7 +102,7 @@ void EnqueueString(Queue *q, char *string) {
  * Removes a node from the end of a queue
  * 
  * @param q The queue from which to dequeue from
- * @return the string that was removed
+ * @return the char* pointer that was removed, which can point to NULL
  */
 char* DequeueString(Queue *q) {
     if (q == NULL) {
@@ -127,7 +131,11 @@ char* DequeueString(Queue *q) {
 }
 
 /**
- * Prints queue statistics to stderr
+ * Prints queue statistics to stderr:
+ *  enqueueCount - A count of the number of strings enqueued on this queue.
+ *  dequeueCount - A count of the number of strings dequeued on this queue.
+ *  enqueueTime - Total time spent performing enqueue operations. 
+ *  dequeueTime - Total time spent performing dequeue operations.
  * 
  * @param q The Queue for which statistics are to be printed.
  */
@@ -142,8 +150,10 @@ void PrintQueueStats(Queue *q) {
     double total_time_d = ((double)getTime(q->dequeueStat))/CLOCKS_PER_SEC;
     double total_time_e = ((double)getTime(q->enqueueStat))/CLOCKS_PER_SEC;
 
-    fprintf(stderr, "Dequeue Count: %d\nEnqueue Count: %d\n", getCount(q->dequeueStat), getCount(q->enqueueStat));
-    fprintf(stderr, "Dequeue Time: %f\nEnqueue Time: %f\n", total_time_d, total_time_e);
+    fprintf(stderr, "Dequeue Count: %d\nEnqueue Count: %d\n", 
+        getCount(q->dequeueStat), getCount(q->enqueueStat));
+    fprintf(stderr, "Dequeue Time: %f\nEnqueue Time: %f\n", 
+        total_time_d, total_time_e);
 
     pthread_mutex_unlock(&q->lock);
 }

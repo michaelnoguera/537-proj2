@@ -2,14 +2,20 @@
  * CS 537 Programming Assignment 2 (Fall 2020)
  * @author Michael Noguera, Julien de Castelnau
  * @date 10/13/2020
- * @file queue.c
+ * @file main.c
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "queue.h"
 #include "workers.h"
 
+/**
+ * Main function. Takes no args, spawns needed threads, reads from stdin.
+ * 
+ * @return 0 upon success
+ */
 int main() {
    pthread_t reader_id;
    pthread_t munch1_id;
@@ -71,5 +77,5 @@ int main() {
    fprintf(stderr, "STATISTICS FOR WriteQueue\n");
    PrintQueueStats(WriteQueue);
 
-   return 0;
+   return EXIT_SUCCESS;
 }
