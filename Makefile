@@ -2,6 +2,7 @@
 
 CFLAGS=-std=c99 -Wall -pedantic
 SCAN_BUILD_DIR=scan-build-out
+TEST_RUNNER=test.sh
 
 .PHONY:clean test all scan-build scan-view
 
@@ -41,13 +42,14 @@ endif
 
 # Run test framework
 test: all
-	@bash test.sh
+	@bash $(TEST_RUNNER)
 
 # Clean files
 clean:
 	rm -f *.o
 	rm -f prodcomm
 	rm -f test.log
+	rm -rf $(SCAN_BUILD_DIR)
 
 # Run the Clang Static Analyzer
 scan-build: clean
