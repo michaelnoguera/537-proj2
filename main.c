@@ -8,10 +8,6 @@
 #include <stdlib.h>
 #include "workers.h"
 
-extern Queue *Munch1Queue;
-extern Queue *Munch2Queue;
-extern Queue *WriteQueue;
-
 int main() {
    pthread_t reader_id;
    pthread_t munch1_id;
@@ -19,24 +15,29 @@ int main() {
    pthread_t writer_id;
 
    const int QUEUE_SIZE = 10;
-   Munch1Queue = CreateStringQueue(QUEUE_SIZE);
-   Munch2Queue = CreateStringQueue(QUEUE_SIZE);
-   WriteQueue = CreateStringQueue(QUEUE_SIZE);
+   Queue* Munch1Queue = CreateStringQueue(QUEUE_SIZE);
+   Queue* Munch2Queue = CreateStringQueue(QUEUE_SIZE);
+   Queue* WriteQueue = CreateStringQueue(QUEUE_SIZE);
 
    // Spawn threads
-   if (pthread_create(&reader_id, NULL, Reader,NULL) != 0) {
+   if (pthread_create(&reader_id, NULL, Reader, Munch1Queue) != 0) {
       perror("Error in Reader thread creation.");
       exit(EXIT_FAILURE);
    }
-   if (pthread_create(&munch1_id, NULL, Munch1,NULL) != 0) {
+   
+   // Munchers take an array of {inputQueue, outputQueue} as parameters
+   Queue* munch1Queues[2] = {Munch1Queue, Munch2Queue};
+   if (pthread_create(&munch1_id, NULL, Munch1, munch1Queues) != 0) {
       perror("Error in Munch1 thread creation.");
       exit(EXIT_FAILURE);
    }
-   if (pthread_create(&munch2_id, NULL, Munch2,NULL) != 0) {
+
+   Queue* munch2Queues[2] = {Munch2Queue, WriteQueue};
+   if (pthread_create(&munch2_id, NULL, Munch2, munch2Queues) != 0) {
       perror("Error in Munch2 thread creation.");
       exit(EXIT_FAILURE);
    }
-   if (pthread_create(&writer_id, NULL, Writer,NULL) != 0) {
+   if (pthread_create(&writer_id, NULL, Writer, WriteQueue) != 0) {
       perror("Error in Writer thread creation.");
       exit(EXIT_FAILURE);
    }
