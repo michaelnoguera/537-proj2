@@ -11,7 +11,7 @@ for TEST in tests/*.txt
 do
     let "TOTAL+=1" 
     echo -e '\n\n'$TOTAL. $TEST >> test.log
-    BUF=$(( diff -I "(STATISTICS.*|Enqueue.*|Dequeue.*)" -c <(./prodcomm <$TEST) <(bash mock.sh <$TEST) &>> test.log) 2>>test.log 1>>test.log)
+    BUF=$(( diff -I "(STATISTICS.*|Enqueue.*|Dequeue.*)" -c <(./prodcomm <$TEST) <(cat tests/$(basename $TEST .txt).out) &>> test.log) 2>>test.log 1>>test.log)
     if [ $? -eq 0 ]
     then
         let "OK+=1" 

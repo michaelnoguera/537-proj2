@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "workers.h"
 
@@ -9,54 +10,67 @@ Queue *Munch1Queue;
 Queue *Munch2Queue;
 Queue *WriteQueue;
 
+
 /**
  * Custom getline() implementation that meets the assignment requirements.
  * Reads from stdin.
  */
-char* readerReadLine() {
+char* readerReadLine(bool* overflow, bool* endOfFile) {
     char c;
     unsigned int i = 0;
 
     const size_t BUFSIZE = 4096;
     char* buf = (char*)calloc(BUFSIZE, sizeof(char));
+    if (buf == NULL) {
+        perror("Error allocating memory to hold line, or BUFSIZE was changed to zero.");
+        exit(EXIT_FAILURE);
+    }
     
     while (i < BUFSIZE) {
         c = getchar();
         //printf("%c", c);
-        if (i == 0 && c == EOF) return NULL;
-        if (c == EOF) {
-            buf[i] = '\0';
-            return buf;
+        if (i == 0 && c == EOF) {
+            *endOfFile = true;
+            return NULL;
         }
-        if(i < BUFSIZE-1 && c == '\n') {
-            buf[i] = '\n';
-            buf[i+1] = '\0';
+        if (c == EOF || c == '\n') {
+            buf[i] = '\0';
             return buf;
         }
 
         buf[i] = c;
         i++;
     }
-    
+
+    *overflow = true;
     fprintf(stderr, "line too long, skipping\n");
-    free(buf); // not gonna use it
-    
-    while (c != EOF && c != '\n') {
+    free(NULL);
+     
+    while (c != '\n' && c != EOF) {
         c = getchar();
     }
-    //printf("Finished consuming throwaway line: %x", c);
-    putc(c, stdin);
 
-    return '\0';
+    //printf("Finished consuming throwaway line: %x", c);
+    return NULL;
 }
 
 void *Reader() {
     char* line;
-    while((line = readerReadLine()) != NULL) {
-        //printf("[READER] %p = %s\n", line, line);
+    bool overflow;
+    bool endOfFile;
+    while(1) {
+        // READ A LINE
+        overflow = false;
+        line = readerReadLine(&overflow, &endOfFile);
+
+        // PARSE THE LINE
+        if (overflow) continue;
+        if (endOfFile) break;
+        
+        // STORE THE LINE
         EnqueueString(Munch1Queue, line);
     }
-    //printf("[READER] Finished, adding NULL sentinel value.\n");
+    // OUT OF LINES
     EnqueueString(Munch1Queue, NULL);
 
     pthread_exit(NULL); // return successfully
@@ -101,15 +115,15 @@ void *Munch2() {
 void *Writer() {
     char* line;
 
+    int i = 0;
     while ((line = DequeueString(WriteQueue)) != NULL) {
         //printf("[WRITER RECIEVED] %p = %s\n", line, line);
-        for (int i = 0; i < strlen(line); i++) {
-            putchar(line[i]);
-        }
+        printf("%s\n", line);
+        i++;
         free(line);
     }
     
-    printf("%d\n", getCount(WriteQueue->dequeueStat));
+    //printf("%d\n", i);
     //printf("[WRITER] Finished, recieved NULL sentinel value.\n");
 
     pthread_exit(NULL); // return successfully
