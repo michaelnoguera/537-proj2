@@ -63,10 +63,9 @@ Queue* CreateStringQueue(const int size) {
 /**
  * Adds a new Node to the end of a Queue.
  * 
- * @param list The list to append to.
- * @param value The value of the new Node.
+ * @param q The queue to enqueue to.
+ * @param value The value of the new node.
  */
-
 void EnqueueString(Queue *q, char *string) {
     if (q == NULL) {
         perror("Can't enqueue an item to NULL.");
@@ -95,6 +94,12 @@ void EnqueueString(Queue *q, char *string) {
     pthread_mutex_unlock(&q->lock);
 }
 
+/**
+ * Removes a node from the end of a queue
+ * 
+ * @param q The queue from which to dequeue from
+ * @return the string that was removed
+ */
 char* DequeueString(Queue *q) {
     if (q == NULL) {
         perror("Can't dequeue an item from NULL.");
@@ -121,6 +126,9 @@ char* DequeueString(Queue *q) {
     return string;
 }
 
+/**
+ * Prints queue statistics 
+ */
 void PrintQueueStats(Queue *q) {
     if (q == NULL) {
         perror("Can't print statistics for NULL queue.");
