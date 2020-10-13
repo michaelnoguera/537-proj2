@@ -1,3 +1,9 @@
+# CS 537 Programming Assignment 2 (Fall 2020)
+# @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
+# @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
+# @date 10/13/2020
+# @file Makefile
+
 # See README for notes about project organization
 
 CFLAGS=-std=c99 -Wall -pedantic

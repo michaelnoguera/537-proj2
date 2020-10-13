@@ -1,9 +1,16 @@
-
-#include <stdlib.h>
-#include <stdio.h> 
-#include <errno.h>
+/**
+ * CS 537 Programming Assignment 2 (Fall 2020)
+ * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
+ * @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
+ * @date 10/13/2020
+ * @file stat.c
+ */
 
 #include "stat.h"
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 Stat* CreateQueueStatistic() {
     Stat* s = (Stat*)malloc(sizeof(Stat));
@@ -11,7 +18,7 @@ Stat* CreateQueueStatistic() {
         perror("Error allocating memory for Queue statistic tracker.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     if (pthread_mutex_init(&s->lock, NULL) != 0) {
         perror("Error initializing Queue statistic mutex lock.\n");
         exit(EXIT_FAILURE);
@@ -45,7 +52,6 @@ void setCount(Stat* s, unsigned int newValue) {
     pthread_mutex_unlock(&s->lock);
 }
 
-
 int getCount(Stat* s) {
     if (s == NULL) {
         perror("Not a valid statistic.");
@@ -69,7 +75,7 @@ void addTime(Stat* s, clock_t timeToAdd) {
     pthread_mutex_unlock(&s->lock);
 }
 
-clock_t getTime(Stat* s) { 
+clock_t getTime(Stat* s) {
     if (s == NULL) {
         perror("Not a valid statistic.");
         exit(EXIT_FAILURE);
