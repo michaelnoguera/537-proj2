@@ -1,3 +1,10 @@
+/**
+ * CS 537 Programming Assignment 2 (Fall 2020)
+ * @author Michael Noguera, Julien de Castelnau
+ * @date 10/13/2020
+ * @file workers.c
+ */
+
 #define _GNU_SOURCE
 
 #include <stdlib.h>
@@ -14,6 +21,12 @@ Queue *WriteQueue;
 /**
  * Custom getline() implementation that meets the assignment requirements.
  * Reads from stdin.
+ * 
+ * @param overflow flag to set if input size greater than buffer
+ * @param endOfFile flag to set if EOF reached
+ * 
+ * @return pointer to heap-allocated string on success, NULL and the appropriate
+ * flag on failure
  */
 char* readerReadLine(bool* overflow, bool* endOfFile) {
     char c;
@@ -31,6 +44,7 @@ char* readerReadLine(bool* overflow, bool* endOfFile) {
         //printf("%c", c);
         if (i == 0 && c == EOF) {
             *endOfFile = true;
+            free(buf);
             return NULL;
         }
         if (c == EOF || c == '\n') {
@@ -44,7 +58,7 @@ char* readerReadLine(bool* overflow, bool* endOfFile) {
 
     *overflow = true;
     fprintf(stderr, "line too long, skipping\n");
-    free(NULL);
+    free(buf);
      
     while (c != '\n' && c != EOF) {
         c = getchar();
@@ -54,10 +68,14 @@ char* readerReadLine(bool* overflow, bool* endOfFile) {
     return NULL;
 }
 
+/**
+ * Reader thread. Consumes input from stdin and parses it into the first
+ * Muncher's queue.
+ */
 void *Reader() {
     char* line;
-    bool overflow;
-    bool endOfFile;
+    bool overflow = false;
+    bool endOfFile = false;
     while(1) {
         // READ A LINE
         overflow = false;
@@ -70,46 +88,50 @@ void *Reader() {
         // STORE THE LINE
         EnqueueString(Munch1Queue, line);
     }
-    // OUT OF LINES
+    // OUT OF LINES -> enqueue null sentinel value
     EnqueueString(Munch1Queue, NULL);
 
-    pthread_exit(NULL); // return successfully
+    pthread_exit(NULL);
 }
 
+/**
+ * First Muncher. Replaces spaces with asterisks as it reads from Munch1Queue,
+ * and 
+ */
 void *Munch1() {
     char* line;
     char* occurrence;
+
     while ((line = DequeueString(Munch1Queue)) != NULL) {
-        //printf("[MUNCH1] RECIEVED %p = %s\n", line, line);
+        // replace spaces with asterisks
         while ( (occurrence = (char*)index(line, ' ')) ) {
             *occurrence = '*';
         }
-        //printf("[MUNCH1] OUTPUT %p = %s\n", line, line);
         EnqueueString(Munch2Queue, line);
     }
-    //printf("[MUNCH1] Finished, adding NULL sentinel value.\n");
 
+    // enqueue null sentinel value
     EnqueueString(Munch2Queue, NULL);
-    pthread_exit(NULL); // return successfully
+    pthread_exit(NULL);
 }
 
 void *Munch2() {
     char* line;
     while ((line = DequeueString(Munch2Queue)) != NULL) {
-        //printf("[MUNCH2] RECIEVED %p = %s\n", line, line);
-        int index = 0;
-        while (line[index] != 0) {
-            if(islower(line[index])) {
-                line[index] = toupper(line[index]);
+        // convert lowercase to uppercase
+        int i = 0;
+        while (line[i] != '\0') {
+            if(islower(line[i])) {
+                line[i] = toupper(line[i]);
             }
-            index++;
+            i++;
         }
-        //printf("[MUNCH2] OUTPUT %p = %s\n", line, line);
         EnqueueString(WriteQueue, line);
     }
-    //printf("[MUNCH2] Finished, adding NULL sentinel value.\n");
+
+    // enqueue null sentinel value
     EnqueueString(WriteQueue, NULL);
-    pthread_exit(NULL); // return successfully
+    pthread_exit(NULL);
 }
 
 void *Writer() {
@@ -117,14 +139,12 @@ void *Writer() {
 
     int i = 0;
     while ((line = DequeueString(WriteQueue)) != NULL) {
-        //printf("[WRITER RECIEVED] %p = %s\n", line, line);
         printf("%s\n", line);
-        i++;
         free(line);
+        i++;
     }
     
     //printf("%d\n", i);
-    //printf("[WRITER] Finished, recieved NULL sentinel value.\n");
 
     pthread_exit(NULL); // return successfully
 }

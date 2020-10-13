@@ -77,8 +77,6 @@ void EnqueueString(Queue *q, char *string) {
 
     clock_t temp_start = clock();
 
-    //printf("  {ENQUEUE adding %s}\n", string);
-
     // WAIT UNTIL SPACE IF NECESSARY
     while (q->tail == (q->head+1) % (q->size)) pthread_cond_wait(&q->full, &q->lock);
     
@@ -107,8 +105,6 @@ char* DequeueString(Queue *q) {
 
     clock_t temp_start = clock();
 
-    // TODO: special case for cleanup with NULL sentinel value
-
     // WAIT UNTIL VALUE IF NECESSARY
     while (q->tail == q->head) pthread_cond_wait(&q->empty, &q->lock);
 
@@ -122,7 +118,6 @@ char* DequeueString(Queue *q) {
 
     pthread_mutex_unlock(&q->lock);
 
-    //printf("\n  {DEQUEUE returning %s}\n", string);
     return string;
 }
 
@@ -142,43 +137,3 @@ void PrintQueueStats(Queue *q) {
 
     pthread_mutex_unlock(&q->lock);
 }
-
-/*
- * Destructs a queue, freeing connected memory.
- * 
- * @param q queue to free
- 
-void DestructStringQueue(Queue* q) {
-    assert(q != NULL);
-
-    pthread_mutex_lock(&q->lock);
-
-    for (int i = 0; i<size; i++) {
-        q->item[i] = NULL;
-    }
-
-    q->head = 0;
-    q->tail = 0;
-    q->size = size;
-
-    q->dequeueStat = CreateQueueStatistic();
-    q->enqueueStat = CreateQueueStatistic();
-
-    if (pthread_mutex_init(&q->lock, NULL) != 0) {
-        perror("Error initializing Queue mutex lock.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_cond_init(&q->empty, NULL) != 0) {
-        perror("Error initializing 'queue empty' condition variable.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_cond_init(&q->full, NULL) != 0) {
-        perror("Error initializing 'queue full' condition variable.\n");
-        exit(EXIT_FAILURE);
-    }
-    
-
-    return q;
-}*/
